@@ -1,7 +1,19 @@
 
-async function load_geojson(){
+async function load_geojson(bbox = null){
+
+    const bboxStr = bbox
+        ?[
+            bbox.getWest(),
+            bbox.getSouth(),
+            bbox.getEast(),
+            bbox.getNorth()
+        ].join(",")
+        : ""
+
     try{
-        const response = await fetch("http://127.0.0.1:5000/api/flash", {
+        const base_url = "http://127.0.0.1:5000/api/flash?bbox="
+        const URI = base_url.concat(bboxStr)
+        const response = await fetch(`http://127.0.0.1:5000/api/flash?bbox=${bboxStr}`, {
             method : "GET",
             headers : {"Content-Type" : "application/json"}
         })
@@ -13,26 +25,30 @@ async function load_geojson(){
     }
 
 }
-async function create_layer(){
-    try{
 
-        const response = await load_geojson()
+async function show_points_in_bbox(){
+    //Get the map bounding box and returns loads a geojson filtered with the bounds into a layer
 
-        const data = await response.json()
+    const bbox = map.getBounds()
 
-        let features = data.features
-        console.log("in show point", features)
-        const flashLayer = L.geoJSON(features).bindPopup(function (layer) {
-            return layer.feature.properties.flash_id;
-        }).addTo(map);
+    const response = await load_geojson(bbox)
 
-        return {flashLayer : flashLayer, features : features}
+    const data = await response.json()
 
-    }catch(error){
-        console.log("erreur dans create_layer")
-        console.log(error)
-        return null
+    const features = data.features
+
+    console.log(features)
+
+    if (flashLayer){
+        map.removeLayer(flashLayer)
     }
+
+    function popup_setup(layer){
+        const popup_msg = `<b>id</b>: ${layer.feature.id}<br><b>commentaire</b>: ${layer.feature.properties.user_com}`
+        return popup_msg
+    }
+
+    flashLayer = L.geoJSON(features).bindPopup(popup_setup).addTo(map);
 }
 
 async function post_point(lat, lng){
@@ -58,15 +74,6 @@ async function post_point(lat, lng){
 
 }
 
-function append_features_to_layer(feature){
-
-    map.removeLayer(flashLayer)
-    features.features.push(feature)
-    L.geoJSON(features).bindPopup(function (layer) {
-            return layer.feature.properties.flash_id;
-        }).addTo(map);
-}
-
 async function onMapClick(e) {
     const latlng = e.latlng
     const ok = confirm("Ajouter un point à la carte ?")
@@ -78,11 +85,8 @@ async function onMapClick(e) {
                 const errorData = await response.json()
                 throw new Error(errorData.error || "Erreur serveur")
             }
-            const data = await response.json()
 
-            const feature = data.feature
-
-            append_features_to_layer(feature)
+            await show_points_in_bbox()
 
         }catch(error){
             console.log(error)
@@ -93,6 +97,14 @@ async function onMapClick(e) {
     }
 }
 
+async function onZoomEnd(){
+    show_points_in_bbox()
+}
+
+async function onMoveEnd(){
+    show_points_in_bbox()
+}
+
 var map = L.map('map').setView([43.6112539, 3.8700000], 17);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -101,14 +113,15 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 var flashLayer
-var features
 
-create_layer().then(({flashLayer : layer, features : feats}) => {
-    flashLayer = layer
-    features = feats
-    console.log("in global: ", features)
-});
+await show_points_in_bbox()
 
 map.on('click', onMapClick);
+map.on('zoomend', onZoomEnd)
+map.on('moveend', onMoveEnd)
+
+//Les objets layer sont des objets js basiques, similaire à des dict python.
+//Quand ils sont créés via un geojson ils ont automatiquement la structure du geojson (features, properties, geometry)
+//Quand ils sont créés via L.Marker par exemple on peut leur ajouter des clefs manuellement : Layer.newData = {"city" : Paris}
 
 

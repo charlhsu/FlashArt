@@ -82,9 +82,15 @@ def create_flash():
 def get_table_as_geojson():
     try:
         bbox = request.args.get("bbox") #Permet de passer un argument dans l'url : /api/flash&bbox=2.3,48.8,2.4,48.9
+
         with connection:
             with connection.cursor() as cursor:
-                cursor.execute(load_query("flashes", "select_as_geojson"))
+
+                if bbox:
+                    west, south, east, north = bbox.split(",")
+                    cursor.execute(load_query("flashes", "select_as_geojson_bbox"), (west, south, east, north))
+                else:
+                    cursor.execute(load_query("flashes", "select_as_geojson_all"))
 
                 gjson_data = cursor.fetchone()[0]
 
