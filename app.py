@@ -39,7 +39,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-CORS(app, origins = ["http://localhost:63342"])
+CORS(app, origins = ["http://localhost:63342", "http://127.0.0.1:5500"])
 # Récupère l'url de connection depuis le fichier env
 url = os.getenv("DATABASE_URL")
 connection = psycopg2.connect(url)

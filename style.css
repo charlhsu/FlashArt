@@ -1,0 +1,45 @@
+header {
+    background-color:#D4AA6C;
+    padding:24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+}
+
+body {
+    margin:0;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+}
+#photo {
+    height: 15vh;
+    min-height: 20px;
+    display:flex;
+    background-color: #dfceb6;
+    align-items: center;
+    justify-content:space-around;
+}
+
+.nav {
+    margin:20px;
+    height: 40%;
+    aspect-ratio: 2/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #c2b097;
+    font-size:50px;
+
+}
+
+#photo_button {
+   
+    height:70%;
+    aspect-ratio: 1/1;
+    background-color:#7c623b;
+    border-width: 10px;
+    border-color:#ac916a;
+    border-radius: 50%;
+    font-size:50px;
+}

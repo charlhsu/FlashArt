@@ -1,4 +1,21 @@
+const photoButton = document.getElementById("photo_button")
+photoButton.addEventListener('click', buttonClick)
 
+//HTML functions
+async function buttonClick(e){
+    const bbox = map.getBounds()
+    const center = bbox.getCenter()
+    const lat = center.lat
+    const lng = center.lng
+
+    const response = post_point(lat, lng, "test bouton")
+    console.log(response)
+
+    show_points_in_bbox()
+
+}
+
+//Leaflet functions
 async function load_geojson(bbox = null){
 
     const bboxStr = bbox
@@ -51,7 +68,7 @@ async function show_points_in_bbox(){
     flashLayer = L.geoJSON(features).bindPopup(popup_setup).addTo(map);
 }
 
-async function post_point(lat, lng){
+async function post_point(lat, lng, com){
 
     try{
         const response = await fetch("http://127.0.0.1:5000/api/flash", {
@@ -60,12 +77,13 @@ async function post_point(lat, lng){
                 "Content-Type": "application/json"
             },
             body : JSON.stringify({
-                user_com: "ceci est un test JS",
+                user_com: com,
                 user_id: 1,
                 latitude: lat,
                 longitude: lng
                 })
         })
+        
         return response
     } catch(error){
         console.error('Echec de la récupération:', error.message)
@@ -80,7 +98,7 @@ async function onMapClick(e) {
 
     if (ok == true){
         try{
-            const response = await post_point(latlng.lat, latlng.lng)
+            const response = await post_point(latlng.lat, latlng.lng, "Ceci est un test JS")
             if(!response.ok){
                 const errorData = await response.json()
                 throw new Error(errorData.error || "Erreur serveur")
