@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
 from cloudinary import CloudinaryImage
+import uuid
 
 
 CREATE_USERS_TABLE = """
@@ -62,32 +63,93 @@ def load_query(table, name):
     with open(f"queries/{table}/{name}.sql") as f:
         return f.read()
 
+
+# @app.post("/api/flash")
+# def create_flash():
+
+#     try:
+#         data = request.get_json()
+#         com = data["user_com"]
+#         user_id = data["user_id"]
+#         longitude = data["longitude"]
+#         latitude = data["latitude"]
+#         with connection:
+#             with connection.cursor() as cursor:
+#                 cursor.execute(load_query("flashes", "create_table"))
+#                 cursor.execute(load_query("flashes", "insert_return_geojson"), (com, user_id, longitude, latitude))
+
+#                 data = cursor.fetchone()[0]
+
+#                 flash_id = data["id"]
+
+#                 cursor.execute(load_query("users","select_from_flash_id"), (flash_id,))
+
+#                 user_com, user_name = cursor.fetchone()
+
+#         return {"feature": data,
+#                 "message": f'User "{user_name}" inserted Flash with comment "{user_com}"'
+#                 }, 201
+#     except Exception as e:
+#         return{
+#             "error": str(e)
+#         }, 500
+
+
 @app.post("/api/flash")
 def create_flash():
     #Cet endpoint permet de créer une entrée dans la base de donnée et envoie l'image associée dans la base cloudinary
-    try:
-        if "file" not in request.files:
+    
+    #Gestion des mauvaises requètes
+    if "file" not in request.files:
             return jsonify({"error" : "No file part"}), 400
+    
+    #Gestion du fetch cloudinary
+    try:
+        #Récupération du fichier contenu dans request.files
+        file = request.files["file"]
+
+        #generating unique id for image
+        img_id = str(uuid.uuid4())
+
+        #upload cloudinary
+        cloudinary.uploader.upload(
+            file, 
+            public_id = img_id, 
+            unique_filename = False, 
+            overwrite = True, 
+            quality = "auto:eco", 
+            fetch_format = "auto",
+            height = 800,
+            crop = "scale"
+        )
+        srcURL = CloudinaryImage(img_id).build_url()
 
     except Exception as e:
-        pass
+        return {
+            "message" : str(e)
+        }, 500
+    
+    #Gestion du fetch postgres
     try:
-        data = request.get_json()
-        com = data["user_com"]
-        user_id = data["user_id"]
-        longitude = data["longitude"]
-        latitude = data["latitude"]
+        com = request.form["user_com"]
+        user_id = request.form["user_id"]
+        longitude = request.form["longitude"]
+        latitude = request.form["latitude"]
         with connection:
             with connection.cursor() as cursor:
+
+                #Creation de la table si elle n'existe pas
                 cursor.execute(load_query("flashes", "create_table"))
-                cursor.execute(load_query("flashes", "insert_return_geojson"), (com, user_id, longitude, latitude))
+
+                #Envoie des données à la base
+                cursor.execute(load_query("flashes", "insert_return_geojson"), (com, user_id, longitude, latitude, srcURL))
 
                 data = cursor.fetchone()[0]
 
                 flash_id = data["id"]
 
+                #Récupération des user_name dans la table users et user_com dans la table flash via flash_id
                 cursor.execute(load_query("users","select_from_flash_id"), (flash_id,))
-
                 user_com, user_name = cursor.fetchone()
 
         return {"feature": data,
@@ -95,7 +157,7 @@ def create_flash():
                 }, 201
     except Exception as e:
         return{
-            "error": str(e)
+            "error while fetching postgres": str(e)
         }, 500
 
 @app.get("/api/flash")

@@ -9,7 +9,7 @@ fileInput.addEventListener("change", async()=>{
     
     //imageContainer.style.display = "flex";
     uploadScreen.style.display = "none";
-
+    
     /*Preview
     const reader = new FileReader();
     reader.onload = (e) => {

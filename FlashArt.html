@@ -24,21 +24,40 @@
             <h1>FlashArt</h1>
             
         </header>
-        <div id="map" style="flex:1"></div>
-        <script type="module" src="leaflet.js">
-        </script>
-        <script type="module" src="image_upload.js">
-        </script>
-        <div id="uploadScreen">
-            <input type="file" id="uploadTag" accept="image/*">
-        </div>
+
+        <main>
+            <!-- carte -->
+            <div id="map" style="flex:1">
+            </div>
+            
+            <!-- Ecran d'upload d'image -->
+            <div id="uploadScreen">
+                <button id="cancelButton">ANNULER</button>
+                <input type="file" id="uploadTag" accept="image/*">
+                <img id="output" src="" alt="">
+                <button id="saveButton">Enregistrer</button>
+                
+            </div>
+        </main>
+
+        <!-- scripts -->
+        <script type="module" src="leaflet.js"></script>
+        
+        
+
+        
+
+        <!-- Prévisualisation -->
         <div id="imageContainer">
             <img id="output" src="" alt="Pas d'image">
         </div>
-        <div id="photo">
-            <p class="nav">Liste</p>
+
+        <!-- Bouton photo et menu -->
+        <nav>
+            <button id = "Liste">Liste</button>
             <button id="photo_button">Flash</button>
-            <p class="nav">Gallerie</p>
-        </div>
+            <button id = "Gallerie">Gallerie</button>
+        </nav>
+
     </body>
 </html>
