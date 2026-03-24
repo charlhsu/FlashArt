@@ -43,3 +43,26 @@ body {
     border-radius: 50%;
     font-size:50px;
 }
+
+#map{
+    display:none;
+}
+
+#imageContainer{
+    display:None
+}
+#uploadScreen{
+    display: flex;
+    flex: 1;
+    align-items: center;
+    margin: 0 auto;
+}
+#uploadTag {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#output{
+    height:500px
+}

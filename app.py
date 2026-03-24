@@ -10,6 +10,10 @@ from flask_cors import CORS
 import os
 import psycopg2
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
+from cloudinary import CloudinaryImage
+
 
 CREATE_USERS_TABLE = """
 CREATE TABLE IF NOT EXISTS public.users
@@ -32,8 +36,6 @@ FLASH_COUNT = """SELECT COUNT(DISTINCT flash_id) AS nb_flashes FROM Flashes"""
 INSERT_WGS84_POINT = "INSERT INTO flashes (geom) VALUES(ST_GeomFromText('POINT(%s, %s)', 4326) WHERE"
 
 
-
-
 # Récuère les paramètres du fichier env
 load_dotenv()
 
@@ -44,13 +46,31 @@ CORS(app, origins = ["http://localhost:63342", "http://127.0.0.1:5500"])
 url = os.getenv("DATABASE_URL")
 connection = psycopg2.connect(url)
 
+
+#Cloudinary setup
+cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
+api_key = os.getenv("CLOUDINARY_API_KEY")
+api_secret = os.getenv("CLOUDINARY_API_SECRET")
+cloudinary.config(
+    cloud_name = cloud_name,
+    api_key = api_key,
+    api_secret = api_secret,
+    secure=True
+)
+
 def load_query(table, name):
     with open(f"queries/{table}/{name}.sql") as f:
         return f.read()
 
 @app.post("/api/flash")
 def create_flash():
+    #Cet endpoint permet de créer une entrée dans la base de donnée et envoie l'image associée dans la base cloudinary
+    try:
+        if "file" not in request.files:
+            return jsonify({"error" : "No file part"}), 400
 
+    except Exception as e:
+        pass
     try:
         data = request.get_json()
         com = data["user_com"]
@@ -99,6 +119,27 @@ def get_table_as_geojson():
         return {
             "error": str(e)
         }, 500
+
+@app.post("/cloudinary/image")
+def fetch_image_to_cloudinary():
+    #endpoint de test pour fetch des données à cloudinary
+    try:
+        
+        if "file" not in request.files:
+            return jsonify({"error" : "No file part"},), 400
+        
+        #On récupère un objet formData qui contient un fichier
+        file = request.files["file"]
+
+        cloudinary.uploader.upload(file, public_id = "test", unique_filename = False, overwrite = True)
+        srcURL = CloudinaryImage("test").build_url()
+
+        return {"srcURL" : srcURL}, 200
+    except Exception as e:
+        return{
+            "error: ": str(e)
+        }, 500
+    
 
 @app.post("/api/user")
 def create_user():
