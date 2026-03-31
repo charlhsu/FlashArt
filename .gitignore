@@ -1,0 +1,7 @@
+venv/
+test.html
+.env
+.flaskenv
+setup_git.txt
+.idea/
+__pycache__/
